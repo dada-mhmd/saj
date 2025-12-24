@@ -30,6 +30,14 @@ export default function QRManagement() {
   // Use the production URL from env, or dynamic origin for local development
   const getBaseUrl = () => {
     if (typeof window === 'undefined') return 'https://saj-mu.vercel.app';
+    
+    // If we are on a live domain (not localhost), always use the current domain
+    // This ensures the QR code always points to the actual site the owner is viewing
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return window.location.origin;
+    }
+
+    // Fallback to env or current origin for local dev
     return process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
   };
 
@@ -134,6 +142,18 @@ export default function QRManagement() {
                   placeholder={language === 'ar' ? 'مثال: 5' : 'e.g. 5'}
                   className="w-full bg-cream/20 border border-saj-brown/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-saj-brown/20 transition-all font-english"
                 />
+              </div>
+
+              <div className="space-y-2 p-4 bg-saj-brown/5 rounded-2xl border border-saj-brown/10">
+                <label className={cn(
+                  "text-[10px] font-bold text-saj-brown/60 uppercase tracking-widest block",
+                  language === 'ar' ? "font-arabic" : "font-english"
+                )}>
+                  {language === 'ar' ? 'الموقع المستهدف' : 'Target Website'}
+                </label>
+                <code className="text-xs text-olive font-mono break-all">
+                  {baseUrl}
+                </code>
               </div>
 
                <div className="space-y-2">
