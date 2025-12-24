@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMenuStore } from '@/store/useMenuStore';
 import { cn } from '@/lib/utils';
 import { 
@@ -20,17 +20,25 @@ export default function QRManagement() {
   const { language } = useMenuStore();
   const [tableNumber, setTableNumber] = useState('');
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Use the production URL from env, or dynamic origin for local development
-  const rawBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                 (typeof window !== 'undefined' ? window.location.origin : 'https://saj-albaraka.vercel.app');
-  
-  // Clean trailing slash to avoid double slashes in the final link
+  const getBaseUrl = () => {
+    if (typeof window === 'undefined') return 'https://saj-mu.vercel.app';
+    return process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  };
+
+  const rawBaseUrl = getBaseUrl();
   const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
   const menuUrl = tableNumber ? `${baseUrl}/?table=${tableNumber}` : baseUrl;
 
   const handleCopy = () => {
+    if (!mounted) return;
     navigator.clipboard.writeText(menuUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -175,21 +183,17 @@ export default function QRManagement() {
             layout
             className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-saj-brown/5 border border-saj-brown/5 relative"
           >
-            <div ref={qrRef} className="bg-white p-4 rounded-2xl border border-saj-brown/5">
-              <QRCodeSVG
-                value={menuUrl}
-                size={200}
-                level="H"
-                includeMargin={false}
-                // imageSettings={{
-                //   src: "/next.svg", // Using next.svg as a placeholder logo for the center
-                //   x: undefined,
-                //   y: undefined,
-                //   height: 40,
-                //   width: 40,
-                //   excavate: true,
-                // }}
-              />
+            <div ref={qrRef} className="bg-white p-4 rounded-2xl border border-saj-brown/5 min-w-[232px] min-h-[232px] flex items-center justify-center">
+              {mounted ? (
+                <QRCodeSVG
+                  value={menuUrl}
+                  size={200}
+                  level="H"
+                  includeMargin={false}
+                />
+              ) : (
+                <div className="w-[200px] h-[200px] bg-saj-brown/5 animate-pulse rounded-lg" />
+              )}
             </div>
             
             <div className="text-center mt-6">
