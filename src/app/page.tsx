@@ -1,65 +1,175 @@
-import Image from "next/image";
+'use client';
+
+import Header from '@/components/Header';
+import CategoryTabs from '@/components/CategoryTabs';
+import MenuItemCard from '@/components/MenuItemCard';
+import { useMenuStore } from '@/store/useMenuStore';
+import { MENU_ITEMS, CATEGORIES } from '@/data/menuData';
+import { Search as SearchIcon, X, ShoppingCart } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <Suspense fallback={<div>Loading...</div>}>
+      <MenuContent />
+    </Suspense>
+  );
+}
+
+function MenuContent() {
+  const { language, activeCategory, searchQuery, setSearchQuery } = useMenuStore();
+  const searchParams = useSearchParams();
+  const tableNumber = searchParams.get('table');
+
+  const filteredItems = MENU_ITEMS.filter((item) => {
+    const matchesCategory = activeCategory ? item.category_id === activeCategory : true;
+    const name = language === 'ar' ? item.name_ar : item.name_en;
+    const description = language === 'ar' ? item.description_ar : item.description_en;
+    const matchesSearch = searchQuery
+      ? name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        description.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div className="min-h-screen bg-background pb-32">
+      <Header />
+      
+      <main className="max-w-xl mx-auto px-4">
+        {/* Search Bar */}
+        <div className="mt-6 mb-4">
+          <div className="relative group">
+            <SearchIcon 
+              size={18} 
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-saj-brown/40 group-focus-within:text-saj-brown transition-colors" 
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={language === 'ar' ? 'ابحث عن وجبتك المفضلة...' : 'Search for your favorite meal...'}
+              className={cn(
+                "w-full bg-white border border-saj-brown/10 rounded-2xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-saj-brown/20 focus:border-saj-brown/30 transition-all shadow-sm",
+                language === 'ar' ? "font-arabic" : "font-english"
+              )}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-saj-brown/5 rounded-full transition-colors"
+              >
+                <X size={16} className="text-saj-brown/40" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Category Navigation */}
+        <div className="-mx-4 mb-6">
+          <CategoryTabs />
+        </div>
+
+        {/* Menu Items */}
+        <div className="space-y-8">
+          {CATEGORIES.filter(cat => activeCategory ? cat.id === activeCategory : true).map((category) => {
+            const categoryItems = filteredItems.filter(item => item.category_id === category.id);
+            if (categoryItems.length === 0) return null;
+
+            return (
+              <section key={category.id} className="space-y-4">
+                <div className="flex items-center gap-2 px-2">
+                  <span className="text-xl">{category.icon}</span>
+                  <h2 className={cn(
+                    "text-xl font-bold text-saj-brown",
+                    language === 'ar' ? "font-arabic" : "font-english"
+                  )}>
+                    {language === 'ar' ? category.name_ar : category.name_en}
+                  </h2>
+                  <div className="flex-1 h-px bg-saj-brown/10 ml-2" />
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  {categoryItems.map((item) => (
+                    <MenuItemCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+
+          {filteredItems.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-20 text-center space-y-4"
+            >
+              <div className="text-5xl font-arabic text-saj-brown/20">🍽️</div>
+              <p className={cn(
+                "text-charcoal/40 text-sm",
+                language === 'ar' ? "font-arabic" : "font-english"
+              )}>
+                {language === 'ar' ? 'لا يوجد نتائج، جرب بحثاً آخر' : 'No results found, try another search'}
+              </p>
+            </motion.div>
+          )}
         </div>
       </main>
+
+      {/* Floating Action Button for WhatsApp Order will go here */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-50">
+        <OrderButton tableNumber={tableNumber} />
+      </div>
     </div>
+  );
+}
+
+function OrderButton({ tableNumber }: { tableNumber: string | null }) {
+  const { cart, language, whatsappNumber } = useMenuStore();
+  const totalPrice = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  
+  if (cart.length === 0) return null;
+
+  const handleOrder = () => {
+    const orderText = cart.map(i => `${i.quantity}x ${language === 'ar' ? i.name_ar : i.name_en}`).join('\n');
+    const message = `Hello, I want to order:\n\n${orderText}\n\nTable: ${tableNumber || 'Walking/General'}\nTotal: ${totalPrice.toLocaleString('en-LB')} LBP`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank');
+  };
+
+  return (
+    <motion.button
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      onClick={handleOrder}
+      className="w-full bg-olive hover:bg-olive-light text-cream rounded-2xl p-4 shadow-xl shadow-olive/30 flex items-center justify-between group transition-all active:scale-95"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+          <ShoppingCart size={20} className="text-white" />
+        </div>
+        <div className="text-left flex flex-col">
+          <span className={cn(
+            "text-xs opacity-80 uppercase tracking-widest font-bold",
+            language === 'ar' ? "font-arabic" : "font-english"
+          )}>
+            {language === 'ar' ? 'إتمام الطلب' : 'Complete Order'}
+          </span>
+          <span className="text-lg font-bold">
+            {totalPrice.toLocaleString('en-LB')} LBP
+          </span>
+        </div>
+      </div>
+      
+      <div className={cn(
+        "bg-white/20 px-4 py-2 rounded-xl font-bold text-sm",
+        language === 'ar' ? "font-arabic" : "font-english"
+      )}>
+        {language === 'ar' ? 'اطلب الآن' : 'Order Now'}
+      </div>
+    </motion.button>
   );
 }
