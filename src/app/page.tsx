@@ -159,7 +159,8 @@ function OrderButton({ tableNumber }: { tableNumber: string | null }) {
     }
 
     const orderText = cart.map(i => `${i.quantity}x ${language === 'ar' ? i.name_ar : i.name_en}`).join('\n');
-    const message = `Hello, I want to order:\n\n${orderText}\n\nTable: ${tableNumber || 'General'}\nTotal: ${totalPrice.toLocaleString('en-LB')} LBP`;
+    const tableLine = tableNumber ? `\nTable: ${tableNumber}` : '';
+    const message = `Hello, I want to order:\n\n${orderText}${tableLine}\n\nTotal: ${totalPrice.toLocaleString('en-LB')} LBP`;
     const encodedMessage = encodeURIComponent(message);
     
     // 4. Using api.whatsapp.com/send?phone=... is most reliable for starting chats with unknown numbers
