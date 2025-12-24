@@ -38,7 +38,14 @@ interface MenuState {
   setWhatsappNumber: (number: string) => void;
   isMenuOpen: boolean;
   setIsMenuOpen: (open: boolean) => void;
+  menuItems: MenuItem[];
+  setMenuItems: (items: MenuItem[]) => void;
+  addMenuItem: (item: MenuItem) => void;
+  updateMenuItem: (item: MenuItem) => void;
+  deleteMenuItem: (itemId: string) => void;
 }
+
+import { MENU_ITEMS } from '@/data/menuData';
 
 export const useMenuStore = create<MenuState>()(
   persist(
@@ -50,6 +57,15 @@ export const useMenuStore = create<MenuState>()(
       setWhatsappNumber: (number) => set({ whatsappNumber: number }),
       isMenuOpen: true,
       setIsMenuOpen: (open) => set({ isMenuOpen: open }),
+      menuItems: MENU_ITEMS,
+      setMenuItems: (items) => set({ menuItems: items }),
+      addMenuItem: (item) => set((state) => ({ menuItems: [item, ...state.menuItems] })),
+      updateMenuItem: (item) => set((state) => ({
+        menuItems: state.menuItems.map((i) => (i.id === item.id ? item : i)),
+      })),
+      deleteMenuItem: (itemId) => set((state) => ({
+        menuItems: state.menuItems.filter((i) => i.id !== itemId),
+      })),
       addToCart: (item) =>
         set((state) => {
           const existing = state.cart.find((i) => i.id === item.id);

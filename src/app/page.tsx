@@ -20,11 +20,11 @@ export default function Home() {
 }
 
 function MenuContent() {
-  const { language, activeCategory, searchQuery, setSearchQuery } = useMenuStore();
+  const { language, activeCategory, searchQuery, setSearchQuery, menuItems } = useMenuStore();
   const searchParams = useSearchParams();
   const tableNumber = searchParams.get('table');
 
-  const filteredItems = MENU_ITEMS.filter((item) => {
+  const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory ? item.category_id === activeCategory : true;
     const name = language === 'ar' ? item.name_ar : item.name_en;
     const description = language === 'ar' ? item.description_ar : item.description_en;

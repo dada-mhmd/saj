@@ -20,14 +20,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MenuFormModal from '@/components/MenuFormModal';
 
 export default function AdminMenu() {
-  const { language } = useMenuStore();
-  const [items, setItems] = useState<MenuItem[]>(initialItems);
+  const { 
+    language, 
+    menuItems, 
+    addMenuItem, 
+    updateMenuItem, 
+    deleteMenuItem 
+  } = useMenuStore();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
-  const filteredItems = items.filter((item) => {
+  const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory === 'all' ? true : item.category_id === activeCategory;
     const name = language === 'ar' ? item.name_ar : item.name_en;
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -36,13 +42,13 @@ export default function AdminMenu() {
 
   const handleSave = (itemData: Partial<MenuItem>) => {
     if (editingItem) {
-      setItems(items.map(i => i.id === editingItem.id ? { ...i, ...itemData } as MenuItem : i));
+      updateMenuItem({ ...editingItem, ...itemData } as MenuItem);
     } else {
       const newItem = {
         ...itemData,
-        id: `new-${Date.now()}`,
+        id: `id-${Date.now()}`,
       } as MenuItem;
-      setItems([newItem, ...items]);
+      addMenuItem(newItem);
     }
     setEditingItem(null);
   };
@@ -53,14 +59,15 @@ export default function AdminMenu() {
   };
 
   const toggleAvailability = (id: string) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, is_available: !item.is_available } : item
-    ));
+    const item = menuItems.find(i => i.id === id);
+    if (item) {
+      updateMenuItem({ ...item, is_available: !item.is_available });
+    }
   };
 
   const deleteItem = (id: string) => {
-    if (confirm('Are you sure you want to delete this item?')) {
-      setItems(items.filter(item => item.id !== id));
+    if (confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذه الوجبة؟' : 'Are you sure you want to delete this dish?')) {
+      deleteMenuItem(id);
     }
   };
 

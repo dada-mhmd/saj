@@ -14,13 +14,15 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
-  const { language } = useMenuStore();
+  const { language, menuItems, isMenuOpen, setIsMenuOpen } = useMenuStore();
   const router = useRouter();
+
+  const activeItemsCount = menuItems.filter(i => i.is_available).length;
 
   const stats = [
     { label: language === 'ar' ? 'إجمالي الطلبات' : 'Total Orders', value: '1,280', icon: ShoppingBag, color: 'bg-saj-brown', trend: '+12%' },
     { label: language === 'ar' ? 'زوار اليوم' : 'Today\'s Visitors', value: '450', icon: Users, color: 'bg-olive', trend: '+5%' },
-    { label: language === 'ar' ? 'الأصناف النشطة' : 'Active Items', value: '24', icon: TrendingUp, color: 'bg-gold', trend: 'Stable' },
+    { label: language === 'ar' ? 'الأصناف النشطة' : 'Active Items', value: activeItemsCount.toString(), icon: TrendingUp, color: 'bg-gold', trend: 'Live' },
     { label: language === 'ar' ? 'مشاهدات المنيو' : 'Menu Views', value: '3,120', icon: Eye, color: 'bg-charcoal', trend: '+18%' },
   ];
 
@@ -132,9 +134,18 @@ export default function AdminDashboard() {
               )}>
                 {language === 'ar' ? 'ظهور المنيو للزبائن' : 'Menu Visible to Customers'}
               </span>
-              <div className="w-12 h-6 bg-olive rounded-full relative">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
-              </div>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className={cn(
+                  "w-12 h-6 rounded-full transition-colors relative",
+                  isMenuOpen ? "bg-olive" : "bg-gray-300"
+                )}
+              >
+                <div className={cn(
+                  "absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all",
+                  isMenuOpen ? (language === 'ar' ? "left-1" : "right-1") : (language === 'ar' ? "right-1" : "left-1")
+                )} />
+              </button>
             </div>
             <div className="p-4 bg-saj-brown/5 rounded-2xl">
               <p className={cn(
