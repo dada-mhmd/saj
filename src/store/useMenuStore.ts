@@ -56,28 +56,38 @@ export const useMenuStore = create<MenuState>()(
       setLanguage: (lang) => set({ language: lang }),
       cart: [],
       whatsappNumber: '961XXXXXXXXX',
-      setWhatsappNumber: async (number) => {
+      setWhatsappNumber: async (number: string) => {
         set({ whatsappNumber: number });
-        // Persist to Supabase
-        await supabase.from('settings').upsert({ id: '1', whatsapp_number: number });
+        const { error } = await supabase.from('settings').upsert({ id: '1', whatsapp_number: number });
+        if (error) {
+          console.error('Failed to save WhatsApp number:', error);
+          throw error;
+        }
       },
       isMenuOpen: true,
-      setIsMenuOpen: async (open) => {
+      setIsMenuOpen: async (open: boolean) => {
         set({ isMenuOpen: open });
-        // Persist to Supabase
-        await supabase.from('settings').upsert({ id: '1', is_menu_open: open });
+        const { error } = await supabase.from('settings').upsert({ id: '1', is_menu_open: open });
+        if (error) {
+          console.error('Failed to save Menu Open status:', error);
+          throw error;
+        }
       },
       fetchSettings: async () => {
         try {
           const { data, error } = await supabase.from('settings').select('*').eq('id', '1').single();
-          if (data && !error) {
+          if (error) {
+            console.warn('Fetch Settings error (expected if table not ready):', error.message);
+            return;
+          }
+          if (data) {
             set({ 
               whatsappNumber: data.whatsapp_number || '961XXXXXXXXX',
               isMenuOpen: data.is_menu_open ?? true 
             });
           }
         } catch (err) {
-          console.error('Failed to fetch settings from Supabase:', err);
+          console.error('Unexpected error fetching settings:', err);
         }
       },
       menuItems: MENU_ITEMS,
