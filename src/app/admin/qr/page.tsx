@@ -23,8 +23,11 @@ export default function QRManagement() {
   const qrRef = useRef<HTMLDivElement>(null);
 
   // Use the production URL from env, or dynamic origin for local development
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+  const rawBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
                  (typeof window !== 'undefined' ? window.location.origin : 'https://saj-albaraka.vercel.app');
+  
+  // Clean trailing slash to avoid double slashes in the final link
+  const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
   const menuUrl = tableNumber ? `${baseUrl}/?table=${tableNumber}` : baseUrl;
 
   const handleCopy = () => {
@@ -178,14 +181,14 @@ export default function QRManagement() {
                 size={200}
                 level="H"
                 includeMargin={false}
-                imageSettings={{
-                  src: "/next.svg", // Using next.svg as a placeholder logo for the center
-                  x: undefined,
-                  y: undefined,
-                  height: 40,
-                  width: 40,
-                  excavate: true,
-                }}
+                // imageSettings={{
+                //   src: "/next.svg", // Using next.svg as a placeholder logo for the center
+                //   x: undefined,
+                //   y: undefined,
+                //   height: 40,
+                //   width: 40,
+                //   excavate: true,
+                // }}
               />
             </div>
             

@@ -26,9 +26,10 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { language } = useMenuStore();
+  const { language, fetchSettings } = useMenuStore();
 
   useEffect(() => {
+    fetchSettings();
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);

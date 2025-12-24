@@ -9,7 +9,7 @@ import { Search as SearchIcon, X, ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 
 export default function Home() {
   return (
@@ -20,9 +20,13 @@ export default function Home() {
 }
 
 function MenuContent() {
-  const { language, activeCategory, searchQuery, setSearchQuery, menuItems } = useMenuStore();
+  const { language, activeCategory, searchQuery, setSearchQuery, menuItems, fetchSettings } = useMenuStore();
   const searchParams = useSearchParams();
   const tableNumber = searchParams.get('table');
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory ? item.category_id === activeCategory : true;
@@ -134,10 +138,35 @@ function OrderButton({ tableNumber }: { tableNumber: string | null }) {
   if (cart.length === 0) return null;
 
   const handleOrder = () => {
+    // 1. Sanitize number: remove any non-digit characters
+    let cleanNumber = whatsappNumber.replace(/\D/g, '');
+    
+    // 2. Remove international leading zeros (00...)
+    if (cleanNumber.startsWith('00')) {
+      cleanNumber = cleanNumber.substring(2);
+    }
+    
+    // 3. Precise Lebanon Auto-Fix (961)
+    if (cleanNumber.startsWith('961')) {
+      // Already correct
+    } else {
+      // If it starts with 0, remove it (e.g., 03 -> 3)
+      if (cleanNumber.startsWith('0')) {
+        cleanNumber = cleanNumber.substring(1);
+      }
+      // Prepend 961 if not there
+      cleanNumber = '961' + cleanNumber;
+    }
+
     const orderText = cart.map(i => `${i.quantity}x ${language === 'ar' ? i.name_ar : i.name_en}`).join('\n');
-    const message = `Hello, I want to order:\n\n${orderText}\n\nTable: ${tableNumber || 'Walking/General'}\nTotal: ${totalPrice.toLocaleString('en-LB')} LBP`;
+    const message = `Hello, I want to order:\n\n${orderText}\n\nTable: ${tableNumber || 'General'}\nTotal: ${totalPrice.toLocaleString('en-LB')} LBP`;
     const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank');
+    
+    // 4. Using api.whatsapp.com/send?phone=... is most reliable for starting chats with unknown numbers
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanNumber}&text=${encodedMessage}`;
+    
+    // 5. Use location.href for direct redirection (avoids "popup blocked" or "new tab" breaks on mobile)
+    window.location.href = whatsappUrl;
   };
 
   return (

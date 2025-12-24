@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
 
 export type Language = 'ar' | 'en';
 
@@ -38,6 +39,7 @@ interface MenuState {
   setWhatsappNumber: (number: string) => void;
   isMenuOpen: boolean;
   setIsMenuOpen: (open: boolean) => void;
+  fetchSettings: () => Promise<void>;
   menuItems: MenuItem[];
   setMenuItems: (items: MenuItem[]) => void;
   addMenuItem: (item: MenuItem) => void;
@@ -49,14 +51,35 @@ import { MENU_ITEMS } from '@/data/menuData';
 
 export const useMenuStore = create<MenuState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       language: 'ar',
       setLanguage: (lang) => set({ language: lang }),
       cart: [],
       whatsappNumber: '961XXXXXXXXX',
-      setWhatsappNumber: (number) => set({ whatsappNumber: number }),
+      setWhatsappNumber: async (number) => {
+        set({ whatsappNumber: number });
+        // Persist to Supabase
+        await supabase.from('settings').upsert({ id: '1', whatsapp_number: number });
+      },
       isMenuOpen: true,
-      setIsMenuOpen: (open) => set({ isMenuOpen: open }),
+      setIsMenuOpen: async (open) => {
+        set({ isMenuOpen: open });
+        // Persist to Supabase
+        await supabase.from('settings').upsert({ id: '1', is_menu_open: open });
+      },
+      fetchSettings: async () => {
+        try {
+          const { data, error } = await supabase.from('settings').select('*').eq('id', '1').single();
+          if (data && !error) {
+            set({ 
+              whatsappNumber: data.whatsapp_number || '961XXXXXXXXX',
+              isMenuOpen: data.is_menu_open ?? true 
+            });
+          }
+        } catch (err) {
+          console.error('Failed to fetch settings from Supabase:', err);
+        }
+      },
       menuItems: MENU_ITEMS,
       setMenuItems: (items) => set({ menuItems: items }),
       addMenuItem: (item) => set((state) => ({ menuItems: [item, ...state.menuItems] })),
@@ -96,6 +119,11 @@ export const useMenuStore = create<MenuState>()(
     }),
     {
       name: 'lebanese-saj-menu-storage',
+      // Only persist local-specific state to localStorage
+      partialize: (state) => ({
+        language: state.language,
+        cart: state.cart,
+      }),
     }
   )
 );
