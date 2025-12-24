@@ -135,7 +135,7 @@ export default function AdminDashboard() {
                 {language === 'ar' ? 'ظهور المنيو للزبائن' : 'Menu Visible to Customers'}
               </span>
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={async () => await setIsMenuOpen(!isMenuOpen)}
                 className={cn(
                   "w-12 h-6 rounded-full transition-colors relative",
                   isMenuOpen ? "bg-olive" : "bg-gray-300"

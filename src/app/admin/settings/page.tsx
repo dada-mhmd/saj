@@ -21,29 +21,37 @@ export default function AdminSettings() {
     setWhatsappNumber, 
     isMenuOpen, 
     setIsMenuOpen,
-    setLanguage 
+    setLanguage,
+    fetchSettings
   } = useMenuStore();
 
   const [localWhatsapp, setLocalWhatsapp] = useState(whatsappNumber);
   const [localIsMenuOpen, setLocalIsMenuOpen] = useState(isMenuOpen);
   const [saving, setSaving] = useState(false);
 
-  // Sync local state if store changes externally
+  // Initial sync from DB
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  // Sync local state if store changes externally (e.g., after fetchSettings)
   useEffect(() => {
     setLocalWhatsapp(whatsappNumber);
     setLocalIsMenuOpen(isMenuOpen);
   }, [whatsappNumber, isMenuOpen]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
-    
-    // Simulate API delay but actually update the store
-    setTimeout(() => {
-      setWhatsappNumber(localWhatsapp);
-      setIsMenuOpen(localIsMenuOpen);
-      setSaving(false);
+    try {
+      await setWhatsappNumber(localWhatsapp);
+      await setIsMenuOpen(localIsMenuOpen);
       alert(language === 'ar' ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved successfully');
-    }, 800);
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert(language === 'ar' ? 'حدث خطأ أثناء الحفظ' : 'Error saving settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
